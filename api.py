@@ -6,12 +6,15 @@ app = FastAPI()
 origins = [
     "http://localhost:3000",
     "localhost:3000",
+    "localhost",
+    "localhost:80",
+    "http://localhost",
+    "http://localhost:80",
     "https://gearheadmarketplace.herokuapp.com",
     "gearheadmarketplace.herokuapp.com",
     "https://www.gearheadmarketplace.herokuapp.com",
     "www.gearheadmarketplace.herokuapp.com",
 ]
-
 
 app.add_middleware(
     CORSMiddleware,
