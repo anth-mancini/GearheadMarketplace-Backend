@@ -4,9 +4,9 @@ How to run this:
 
 The backend uses FastAPI, that is Python based so you want to make sure you have Python3.9 installed
 
-Here's how you'd run spin up this server in a virtual env:
+Here's how you'd run spin up this server in a local virtual env:
 
-make sure to run this inside the "backend" folder. Then open a terminal and run:
+open a terminal and run:
 
 python3.9 -m venv venv
 source venv/bin/activate
