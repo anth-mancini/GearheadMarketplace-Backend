@@ -7,7 +7,9 @@ origins = [
     "http://localhost:3000",
     "localhost:3000",
     "https://gearheadmarketplace.herokuapp.com",
-    "gearheadmarketplace.herokuapp.com"
+    "gearheadmarketplace.herokuapp.com",
+    "https://www.gearheadmarketplace.herokuapp.com",
+    "www.gearheadmarketplace.herokuapp.com",
 ]
 
 
