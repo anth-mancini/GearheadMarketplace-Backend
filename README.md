@@ -9,7 +9,9 @@ Here's how you'd run spin up this server in a local virtual env:
 open a terminal and run:
 
 python3.9 -m venv venv
+
 source venv/bin/activate
+
 export PYTHONPATH=$PWD
 
 to start the server make sure you are in the backend folder again, and run:
