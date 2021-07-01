@@ -9,12 +9,7 @@ SQLALCHEMY_DATABASE_URL = "postgresql://usurmhsrkkzjrb:0a8d4ec36ff2abff343c0426b
 
 # include the connect args for sqllte only
 # SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-try:
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL
-    )
-except:
-    raise "DB connection error"
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
