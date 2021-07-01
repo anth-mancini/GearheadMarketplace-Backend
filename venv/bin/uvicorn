@@ -1,4 +1,4 @@
-#!/Users/felixi/Desktop/GearheadMarketplace/backend/venv/bin/python3.9
+#!/Users/felixi/Desktop/GearheadMarketplace/venv/bin/python3.9
 # -*- coding: utf-8 -*-
 import re
 import sys
