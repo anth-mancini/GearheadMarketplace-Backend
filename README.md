@@ -14,16 +14,10 @@ source venv/bin/activate
 
 export PYTHONPATH=$PWD
 
+install dependenies: pip install -r requirements.txt
+
 to start the server make sure you are in the backend folder again, and run:
 
 python main.py
 
 You're done. Go and check "localhost:8000" to make sure it worked.
-
-Dependcines:
-
-fastapi
-uvicorn
-gunicorn
-uvloop
-httptools
