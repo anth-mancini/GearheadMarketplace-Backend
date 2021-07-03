@@ -5,6 +5,7 @@ from typing import List
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import null
+from pydantic import BaseModel
 
 from sql import crud, models, schemas
 from sql.database import SessionLocal, engine
@@ -26,6 +27,8 @@ origins = [
     "localhost:3000",
     "localhost:8888",
     "http://localhost:8888",
+    "http://localhost:8000",
+    "localhost:8000",
     "localhost",
     "localhost:80",
     "http://localhost",
@@ -44,7 +47,6 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-
 @app.get("/", tags=["root"])
 async def read_root() -> dict:
     return {"message": "Welcome to your todo list."}
@@ -61,14 +63,6 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     return crud.create_user(db=db, user=user)
-# @app.post("/users/", response_model=schemas.User)
-# def create_user(jsonobject: jsonobject):
-#     print(jsonobject)
-#     return jsonobject
-    # db_user = crud.get_user_by_email(db, email=user.email)
-    # if db_user:
-    #     raise HTTPException(status_code=400, detail="Email already registered")
-    # return crud.create_user(db=db, user=user)
 
 @app.get("/users/", response_model=List[schemas.User])
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
