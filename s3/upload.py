@@ -18,7 +18,7 @@ def upload_file_to_bucket(s3_client, file_obj, bucket, folder, object_name=None)
 
     # Upload the file
     try:
-        response = s3_client.upload_fileobj(file_obj, bucket, f"{folder}/{object_name}")
+        response = s3_client.upload_fileobj(file_obj, bucket, f"{folder}/{object_name}", ExtraArgs={'ACL': 'public-read'})
     except ClientError as e:
         logging.error(e)
         return False
