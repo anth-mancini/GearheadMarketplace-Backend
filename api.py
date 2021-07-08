@@ -70,7 +70,6 @@ async def return_server_status():
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)
-    
     if crud.get_user_by_email(db, email=user.email) or crud.get_user_by_user_name(db, user_name=user.user_name):
         raise HTTPException(status_code=400, detail="Email or username already registered")
     return crud.create_user(db=db, user=user)
@@ -102,6 +101,41 @@ def read_user_items(user_id: int, skip: int = 0, limit: int = 100, db: Session =
 def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     items = crud.get_items(db, skip=skip, limit=limit)
     return items
+
+@app.post("/login/")
+def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_email(db, email=user.email)
+    if db_user is None:
+        return "Username or password is wrong"
+    if db_user.password == user.password:
+        return "login success"
+    return "Username or password is wrong"
+
+@app.post("/upload_offer/", response_model="")
+async def upload_offer(user_id: int = Form(...),
+                        title: str = Form(...), 
+                        description: str = Form(...), 
+                        price: float = Form(...),
+                        location: str = Form(...),
+                        shipping_availability: bool = Form(...),
+                        file: UploadFile = File(...), s3: BaseClient = Depends(s3_auth), db: Session = Depends(get_db)):
+    offer = models.Offer(title=title, price=price, location = location,description=description, shipping_availability=shipping_availability, owner_id=user_id)
+
+    offerMsg = crud.create_user_item(db=db, offer=offer)
+    
+    # offerID = crud.create_user_item(db=db, offer=offer)
+    # offer1 = schemas.OfferCreate(title, price, location, description)
+    # crud.create_user_item(db=db, offer)
+    upload_obj = upload_file_to_bucket(s3_client=s3, file_obj=file.file,
+                                       bucket="gearhead-images",
+                                       folder="images",
+                                       object_name=file.filename
+                                       )
+    if(upload_obj):
+        imgURL = 'https://gearhead-images.s3.amazonaws.com/images/' + file.filename
+        img = models.Image(link=imgURL, offer_id=offerMsg.id)
+        crud.attach_offer_image(db=db, img=img)
+    return {offerMsg, upload_obj}
 
 
 # # testing AWS S3 STARTS
@@ -155,31 +189,6 @@ def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 #                             detail="File could not be uploaded")
 # testing AWS S3 ENDS
 
-@app.post("/upload_offer/", response_model="")
-async def upload_offer(user_id: int = Form(...),
-                        title: str = Form(...), 
-                        description: str = Form(...), 
-                        price: float = Form(...),
-                        location: str = Form(...),
-                        shipping_availability: bool = Form(...),
-                        file: UploadFile = File(...), s3: BaseClient = Depends(s3_auth), db: Session = Depends(get_db)):
-    offer = models.Offer(title=title, price=price, location = location,description=description, shipping_availability=shipping_availability, owner_id=user_id)
-
-    offerMsg = crud.create_user_item(db=db, offer=offer)
-    
-    # offerID = crud.create_user_item(db=db, offer=offer)
-    # offer1 = schemas.OfferCreate(title, price, location, description)
-    # crud.create_user_item(db=db, offer)
-    upload_obj = upload_file_to_bucket(s3_client=s3, file_obj=file.file,
-                                       bucket="gearhead-images",
-                                       folder="images",
-                                       object_name=file.filename
-                                       )
-    if(upload_obj):
-        imgURL = 'https://gearhead-images.s3.amazonaws.com/images/' + file.filename
-        img = models.Image(link=imgURL, offer_id=offerMsg.id)
-        crud.attach_offer_image(db=db, img=img)
-    return {offerMsg, upload_obj}
 
 
 #testing file upload to AWS S3

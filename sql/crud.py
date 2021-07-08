@@ -24,7 +24,7 @@ def create_user(db: Session, user: schemas.UserCreate):
                             password=user.password,
                             first_name=user.first_name,
                             last_name=user.last_name, 
-                            level=user.level)
+                            isAdmin=user.isAdmin)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

@@ -1,3 +1,4 @@
+from sql.database import Base
 from typing import List, Optional
 
 from pydantic import BaseModel
@@ -34,12 +35,16 @@ class Offer(OfferBase):
     class Config:
         orm_mode = True
 
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
 class UserBase(BaseModel):
     email: str
     user_name: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    level: Optional[str] = None
+    isAdmin: Optional[bool] = None
 
 class UserCreate(UserBase):
     password: str

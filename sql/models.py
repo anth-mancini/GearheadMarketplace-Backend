@@ -13,7 +13,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     first_name = Column(String)
     last_name = Column(String)
-    level = Column(String)
+    isAdmin = Column(Boolean)
     offers = relationship("Offer", back_populates="owner")
 
 class Offer(Base):
