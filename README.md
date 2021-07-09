@@ -10,7 +10,8 @@ open a terminal and run:
 
 python3.9 -m venv venv
 
-source venv/bin/activate
+Mac: source venv/bin/activate
+Windows: venv\Scripts\Activate (Might need to run this before if windows doesn't allow it: Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted)
 
 export PYTHONPATH=$PWD
 
