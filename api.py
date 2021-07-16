@@ -108,7 +108,7 @@ def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
     if db_user is None:
         return "Username or password is wrong"
     if db_user.password == user.password:
-        return "login success"
+        return db_user.isAdmin
     return "Username or password is wrong"
 
 @app.post("/upload_offer/", response_model="")
