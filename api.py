@@ -114,6 +114,12 @@ def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     items = crud.get_items(db, skip=skip, limit=limit)
     return items
 
+@app.get("/offers/{offer_id}", response_model=schemas.Offer)
+def read_offer(offer_id: int, db: Session = Depends(get_db)):
+    db_offer = crud.get_offer(db, offer_id=offer_id)
+    if db_offer is None:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    return db_offer
 
 @app.post("/login/")
 def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):

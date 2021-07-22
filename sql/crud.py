@@ -34,6 +34,9 @@ def create_user(db: Session, user: schemas.UserCreate):
 def get_items(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Offer).offset(skip).limit(limit).all()
 
+def get_offer(db: Session, offer_id: int):
+    return db.query(models.Offer).filter(models.Offer.id == offer_id).first()
+
 def get_user_items(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Offer).filter(models.User.id == user_id).offset(skip).limit(limit).all()
     
