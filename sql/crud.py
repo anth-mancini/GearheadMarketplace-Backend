@@ -19,6 +19,12 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 def get_image(db: Session, offer_id: int):
     return db.query(models.Image).filter(models.Image.offer_id == offer_id).first()
 
+def delete_user(db: Session, id: int):
+    db.query(models.Image).filter(models.Image.owner_id == id).delete(False)
+    db.query(models.Offer).filter(models.Offer.owner_id == id).delete(False)
+    db.query(models.User).filter(models.User.id == id).delete(False)
+    db.commit()
+
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(email=user.email, 
                             user_name=user.user_name,
