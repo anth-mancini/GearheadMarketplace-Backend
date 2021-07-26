@@ -110,6 +110,8 @@ def read_user_items(user_id: int, skip: int = 0, limit: int = 100, db: Session =
     items = crud.get_user_items(db, user_id, skip=skip, limit=limit)
     return items
 
+# to do: put some failsafes in here... what happens if we can't delete a specific offering for example? do we keep going or do we abort.
+# if we keep going we'll have dead data in the db... which takes up space for no reason
 @app.delete("/users/{user_id}")
 def delete_user(user_id: int, s3: BaseClient = Depends(s3_auth), db: Session = Depends(get_db)):
     db_user = crud.get_user(db, user_id=user_id)
