@@ -1,3 +1,4 @@
+from s3.delete import delete_file_from_bucket
 from fastapi.middleware.cors import CORSMiddleware
 
 from typing import List
@@ -8,6 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import null
 from pydantic import BaseModel
+from sqlalchemy.sql.functions import mode
 
 from sql import crud, models, schemas
 from sql.database import SessionLocal, engine
@@ -114,12 +116,14 @@ def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     items = crud.get_items(db, skip=skip, limit=limit)
     return items
 
+
 @app.get("/offers/{offer_id}", response_model=schemas.Offer)
 def read_offer(offer_id: int, db: Session = Depends(get_db)):
     db_offer = crud.get_offer(db, offer_id=offer_id)
     if db_offer is None:
         raise HTTPException(status_code=404, detail="Offer not found")
     return db_offer
+
 
 @app.post("/login/")
 def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
@@ -129,6 +133,62 @@ def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
     if db_user.password == user.password:
         return {"user_name": db_user.user_name, "isAdmin": db_user.isAdmin}
     return "Username or password is wrong"
+
+# this is not perfect... the updating of the offer should work as expected BUT
+# the updating of an image can fail and we are not rolling back to the previous offer
+# need to extend this functionality. Realistcally, we have the "old" entry so we can just "re-update"
+# perhaps a better method would be to try to update an image first, and if that is ok then we can continue updating the offer
+# since really the image is nested inside an offer.
+@app.post("/offers/{offer_id}", response_model=schemas.Offer)
+def change_offer(offer_id: int,
+                 title: str = Form(...),
+                 description: str = Form(...),
+                 price: float = Form(...),
+                 location: str = Form(...),
+                 shipping_availability: bool = Form(...),
+                 file: UploadFile = File(...),
+                 s3: BaseClient = Depends(s3_auth),
+                 db: Session = Depends(get_db)):
+
+    db_offer = crud.get_offer(db, offer_id=offer_id)
+
+    if db_offer is None:
+        raise HTTPException(
+            status_code=404, detail="Offer not found, unable to edit")
+
+    newOffer = schemas.Offer(id=offer_id, title=title, price=price, location=location, description=description,
+                             shipping_availability=shipping_availability, owner_id=db_offer.owner_id)
+    db_updated_offer = crud.change_user_item(db, db_offer, newOffer)
+
+    if(file.filename != ""):
+        isDeleted = crud.delete_offer_image(db, offer_id)
+        if(isDeleted):
+            upload_obj = upload_file_to_bucket(s3_client=s3, file_obj=file.file,
+                                               bucket="gearhead-images",
+                                               folder="images",
+                                               object_name=file.filename)
+            if(upload_obj):
+                imgURL = 'https://gearhead-images.s3.amazonaws.com/images/' + file.filename
+                img = models.Image(link=imgURL, offer_id=newOffer.id)
+                crud.attach_offer_image(db=db, img=img)
+        else:
+            raise HTTPException(
+                status_code=404, detail="Failed to update image but updated offer")
+    return db_updated_offer
+
+
+@app.delete("/offers/{offer_id}")
+def delete_offer(offer_id: int, s3: BaseClient = Depends(s3_auth), db: Session = Depends(get_db)):
+    db_offer = crud.get_offer(db, offer_id=offer_id)
+    if db_offer is None:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    db_image = crud.get_image(db, offer_id=offer_id)
+    imageName = db_image.link.replace(
+        'https://gearhead-images.s3.amazonaws.com/images/', '')
+    response = delete_file_from_bucket(
+        s3, file_obj=imageName, bucket="gearhead-images", folder="images")
+    crud.delete_offer(db, offer_id=offer_id)
+    return 'Deleted'
 
 
 @app.post("/upload_offer/", response_model="")
@@ -154,7 +214,8 @@ async def upload_offer(user_id: int = Form(...),
                                        )
     if(upload_obj):
         imgURL = 'https://gearhead-images.s3.amazonaws.com/images/' + file.filename
-        img = models.Image(link=imgURL, offer_id=offerMsg.id)
+        img = models.Image(link=imgURL, offer_id=offerMsg.id,
+                           owner_id=offerMsg.owner_id)
         crud.attach_offer_image(db=db, img=img)
     return {offerMsg, upload_obj}
 
