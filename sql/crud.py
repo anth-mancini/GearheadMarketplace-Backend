@@ -13,6 +13,9 @@ def get_user_by_email(db: Session, email: str):
 def get_user_by_user_name(db: Session, user_name: str):
     return db.query(models.User).filter(models.User.user_name == user_name).first()
 
+def get_user_by_id(db: Session, user_id: str):
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
 
@@ -71,6 +74,14 @@ def change_user_item(db: Session, old_offer: models.Offer, new_offer: schemas.Of
     db.commit()
     db.refresh(old_offer)
     return old_offer
+
+def change_user_info(db: Session, old_user: models.User, newUser: dict):
+    # update_data = newUser.dict(exclude_unset=True)
+    for key, value in newUser.items():
+        setattr(old_user, key, value)
+    db.commit()
+    db.refresh(old_user)
+    return old_user
 
 def attach_offer_image(db: Session, img: models.Image):
     # db_item = models.Offer(**offer.dict(), owner_id=user_id)

@@ -5,6 +5,7 @@ from typing import List
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi import File, UploadFile, Form
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import null
@@ -83,6 +84,23 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
             status_code=400, detail="Email or username already registered")
     return crud.create_user(db=db, user=user)
 
+# updating a user
+@app.post("/users/{user_id}", response_model=schemas.User)
+def update_user(user_id: int, user: schemas.UserBase, 
+                # email: str = Form(...),
+                # user_name: str = Form(...),
+                # first_name: str = Form(...),
+                # last_name: str = Form(...),
+                # isAdmin: bool = Form(...),
+                # password: str = Form(...),
+                db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_id(db, user_id=user_id)
+    if db_user is None:
+        raise HTTPException(status_code=400, detail="User not found")
+    # modUser = schemas.UserBase(email=user.email, user_name=user.user_name, first_name=user.first_name, last_name=user.last_name, isAdmin=user.isAdmin)
+    db_mod_user = crud.change_user_info(db, db_user, jsonable_encoder(user))
+    return db_mod_user
+
 
 @app.get("/users/", response_model=List[schemas.User])
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -112,20 +130,23 @@ def read_user_items(user_id: int, skip: int = 0, limit: int = 100, db: Session =
 
 # to do: put some failsafes in here... what happens if we can't delete a specific offering for example? do we keep going or do we abort.
 # if we keep going we'll have dead data in the db... which takes up space for no reason
+
+
 @app.delete("/users/{user_id}")
 def delete_user(user_id: int, s3: BaseClient = Depends(s3_auth), db: Session = Depends(get_db)):
     db_user = crud.get_user(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # deleting all images in the AWS S3 bucket BEFORE deleting from the database
     items = crud.get_user_items(db, user_id, skip=0, limit=None)
     for item in items:
         delete_bucket_image(item.id, s3, db)
 
-    #then deleting the user which will delete all images, and offerings
+    # then deleting the user which will delete all images, and offerings
     crud.delete_user(db, user_id)
     return 'Deleted'
+
 
 def delete_bucket_image(offer_id: int, s3: BaseClient = Depends(s3_auth), db: Session = Depends(get_db)):
     db_image = crud.get_image(db, offer_id=offer_id)
@@ -134,6 +155,7 @@ def delete_bucket_image(offer_id: int, s3: BaseClient = Depends(s3_auth), db: Se
     response = delete_file_from_bucket(
         s3, file_obj=imageName, bucket="gearhead-images", folder="images")
     return
+
 
 @app.get("/offers/", response_model=List[schemas.Offer])
 def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -163,6 +185,8 @@ def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
 # need to extend this functionality. Realistcally, we have the "old" entry so we can just "re-update"
 # perhaps a better method would be to try to update an image first, and if that is ok then we can continue updating the offer
 # since really the image is nested inside an offer.
+
+
 @app.post("/offers/{offer_id}", response_model=schemas.Offer)
 def change_offer(offer_id: int,
                  title: str = Form(...),
@@ -199,6 +223,7 @@ def change_offer(offer_id: int,
             raise HTTPException(
                 status_code=404, detail="Failed to update image but updated offer")
     return db_updated_offer
+
 
 @app.delete("/offers/{offer_id}")
 def delete_offer(offer_id: int, s3: BaseClient = Depends(s3_auth), db: Session = Depends(get_db)):
