@@ -53,7 +53,7 @@ def delete_offer(db: Session, offer_id: int):
     db.commit()
 
 def get_user_items(db: Session, user_id: int, skip: int = 0, limit: int = 100):
-    return db.query(models.Offer).filter(models.User.id == user_id).offset(skip).limit(limit).all()
+    return db.query(models.Offer).filter(models.Offer.owner_id == user_id).offset(skip).limit(limit).all()
     
 # def create_user_item(db: Session, offer: models.Offer, user_id: int):
 def create_user_item(db: Session, offer: models.Offer):
