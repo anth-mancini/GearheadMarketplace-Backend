@@ -87,12 +87,6 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 # updating a user
 @app.post("/users/{user_id}", response_model=schemas.User)
 def update_user(user_id: int, user: schemas.UserBase, 
-                # email: str = Form(...),
-                # user_name: str = Form(...),
-                # first_name: str = Form(...),
-                # last_name: str = Form(...),
-                # isAdmin: bool = Form(...),
-                # password: str = Form(...),
                 db: Session = Depends(get_db)):
     db_user = crud.get_user_by_id(db, user_id=user_id)
     if db_user is None:
@@ -177,7 +171,7 @@ def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
     if db_user is None:
         return "Username or password is wrong"
     if db_user.password == user.password:
-        return {"user_name": db_user.user_name, "isAdmin": db_user.isAdmin}
+        return {"user_name": db_user.user_name, "isAdmin": db_user.isAdmin, "userID": db_user.id}
     return "Username or password is wrong"
 
 # this is not perfect... the updating of the offer should work as expected BUT
